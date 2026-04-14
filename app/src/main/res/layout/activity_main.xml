@@ -18,7 +18,10 @@
     </FrameLayout>
 
     <com.google.android.material.bottomnavigation.BottomNavigationView
-        android:visibility="gone"
+        app:itemIconTint="@null"
+        android:background="@color/white"
+        app:itemRippleColor="#ff1238"
+        android:visibility="visible"
         android:layout_alignParentBottom="true"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
