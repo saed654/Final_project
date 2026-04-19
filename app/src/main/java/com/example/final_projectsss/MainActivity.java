@@ -10,9 +10,6 @@ import androidx.fragment.app.Fragment;
 import com.example.final_projectsss.ai.Ai_fragment;
 import com.example.final_projectsss.log_in.Log_in_fragment;
 import com.example.final_projectsss.log_in.Manager_fragment;
-import com.example.final_projectsss.molds.NotificationHelper;
-import com.example.final_projectsss.molds.OrderAlertHelper;
-import com.example.final_projectsss.Home_fragment;
 import com.example.final_projectsss.products.ManagerProductsFragment;
 import com.example.final_projectsss.products.UserProductsFragment;
 import com.example.final_projectsss.timeschedule.Schedule_fragment;
@@ -21,7 +18,6 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 public class MainActivity extends AppCompatActivity {
-    public static boolean x = true;
     FirebaseFirestore db = FirebaseFirestore.getInstance();
     FirebaseAuth auth;
     BottomNavigationView bottomNavigationView;
@@ -72,10 +68,10 @@ public class MainActivity extends AppCompatActivity {
                             setmenu("user");
                             changefrag(new UserProductsFragment());
                         }
-                    }
+                    }else{
                     auth.signOut();
                     setmenu("");
-                    changefrag(new Home_fragment());
+                    changefrag(new Home_fragment());}
                 })
                 .addOnFailureListener(e -> {
                     Toast.makeText(this, "Failed to load user data", Toast.LENGTH_SHORT).show();

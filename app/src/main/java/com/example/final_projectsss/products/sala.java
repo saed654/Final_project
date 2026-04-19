@@ -98,7 +98,7 @@ public class sala extends Fragment implements ProductAdapter.Listener {
 
                     queryDocumentSnapshots.forEach(doc -> {
                         String productId = doc.getId();
-                        String name = doc.getString("name");
+                        String name = doc.getString("productName");
                         Double priceDouble = doc.getDouble("price");
                         String imageString = doc.getString("image");
                         Long numberLong = doc.getLong("number");

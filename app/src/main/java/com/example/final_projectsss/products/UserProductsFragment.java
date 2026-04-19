@@ -1,6 +1,6 @@
 package com.example.final_projectsss.products;
 
-import static com.example.final_projectsss.MainActivity.x;
+
 
 import android.app.AlertDialog;
 import android.content.Context;

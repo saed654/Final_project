@@ -103,20 +103,23 @@ public class Manager_fragment extends Fragment {
                         doc.getReference()
                                 .update("role", role)
                                 .addOnSuccessListener(unused -> {
+                                    setRole.setEnabled(true);
                                     showSnack("Role updated to " + role);
                                     Log.d(TAG, "Role updated for " + e + " to " + role);
                                 })
                                 .addOnFailureListener(err -> {
+                                    setRole.setEnabled(true);
                                     Log.e(TAG, "Failed to update role for " + e, err);
                                     showSnack("Failed to update role");
                                 });
                     });
                 })
                 .addOnFailureListener(err -> {
+                    setRole.setEnabled(true);
                     Log.e(TAG, "Role search failed", err);
                     showSnack("Something went wrong");
                 });
-        setRole.setEnabled(true);
+
     }
 
     private void setActive(boolean active) {
@@ -149,9 +152,13 @@ public class Manager_fragment extends Fragment {
                             doc.getReference().update("active", active).addOnSuccessListener(unused -> {
                                 showSnack(active ? "User enabled" : "User disabled");
                                 Log.d(TAG, "User " + e + " active=" + active);
+                                disableBtn.setEnabled(true);
+                                enableBtn.setEnabled(true);
                             }).addOnFailureListener(err -> {
                                 Log.e(TAG, "Status change failed", err);
                                 showSnack(err.getMessage());
+                                disableBtn.setEnabled(true);
+                                enableBtn.setEnabled(true);
                             });
                         }
                     });
@@ -159,9 +166,10 @@ public class Manager_fragment extends Fragment {
                 .addOnFailureListener(err -> {
                     Log.e(TAG, "Status change failed", err);
                     showSnack(err.getMessage());
+                    disableBtn.setEnabled(true);
+                    enableBtn.setEnabled(true);
                 });
-        disableBtn.setEnabled(true);
-        enableBtn.setEnabled(true);
+
 
     }
 
