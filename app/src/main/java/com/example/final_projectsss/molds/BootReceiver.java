@@ -1,14 +1,10 @@
 package com.example.final_projectsss.molds;
-
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.util.Log;
-
 import com.example.final_projectsss.MainActivity;
 
-import java.util.HashSet;
 import java.util.Set;
 
 public class BootReceiver extends BroadcastReceiver {
@@ -34,25 +30,13 @@ public class BootReceiver extends BroadcastReceiver {
 
             Set<String> dates = ReminderStorage.getAllReminders(context);
             Log.d(TAG, "Saved reminder dates count = " + dates.size());
-            for (String item : dates) {
-                if (item == null || !item.contains("|")) continue;
-
-                String[] parts = item.split("\\|", 2);
-                if (parts.length != 2) continue;
-
-                String email = parts[0];
-                String date = parts[1];
-
+            for (String date : dates) {
                 if (ReminderScheduler.isReminderValid(date)) {
-                    Log.d(TAG, "Rescheduling valid reminder: " + email + " | " + date);
-                    ReminderScheduler.scheduleReminder(context, date, true,"0");
+                    Log.d(TAG, "Rescheduling valid reminder: " + date);
+                    ReminderScheduler.scheduleReminder(context, date, true);
                 } else {
-                    Log.d(TAG, "Expired reminder found after boot: " + email + " | " + date);
-
-                    SharedPreferences prefs = context.getSharedPreferences("reminder_pref", Context.MODE_PRIVATE);
-                    Set<String> current = new HashSet<>(prefs.getStringSet("saved_dates", new HashSet<>()));
-                    current.remove(item);
-                    prefs.edit().putStringSet("saved_dates", current).apply();
+                    Log.d(TAG, "Removing expired reminder after boot: " + date);
+                    ReminderStorage.removeReminder(context, date);
                 }
             }
 

@@ -32,14 +32,13 @@ public class ReminderReceiver extends BroadcastReceiver {
             int notificationId = intent != null
                     ? intent.getIntExtra("notification_id", 1000)
                     : 1000;
-            String email = intent != null ? intent.getStringExtra("email") : null;
             NotificationCompat.Builder builder = new NotificationCompat.Builder(
                     context,
                     NotificationHelper.CHANNEL_ID
             )
                     .setSmallIcon(R.mipmap.ic_launcher)
                     .setContentTitle(title == null ? "Appointment Reminder" : title)
-                    .setContentText(message == null ? email+"You have an appointment tomorrow." : message)
+                    .setContentText(message == null ? "You have an appointment tomorrow." : message)
                     .setPriority(NotificationCompat.PRIORITY_HIGH)
                     .setAutoCancel(true);
 

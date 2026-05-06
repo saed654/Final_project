@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -37,9 +38,10 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 
 public class Ai_fragment extends Fragment {
-
+    private boolean autoMessageSent = false;
     // ===== UI =====
     private String productName = "";
+    private Double productPrice=0.0;
     private EditText etMessage;
     private Button btnSend;
     private LinearLayout chatContainer;
@@ -49,7 +51,7 @@ public class Ai_fragment extends Fragment {
     // IMPORTANT:
     // For real apps, DO NOT keep your secret key inside the APK.
     // Move it to a backend/server if possible.
-    private static final String API_KEY = "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";
+    private static final String API_KEY = "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";
     private static final String API_URL = "https://openrouter.ai/api/v1/chat/completions";
     private static final String MODEL = "openrouter/free";
 
@@ -106,17 +108,10 @@ public class Ai_fragment extends Fragment {
             appendMessage("AI", "Hello! Ask me anything about products, skincare, or beauty tips.", false);
         }
 
-        // Get product name if passed from previous fragment
         if (getArguments() != null) {
             productName = getArguments().getString("product_name", "");
-        }
-
-        // Auto-ready prompt for chosen product
-        if (!productName.isEmpty() && messages.length() == 0) {
-            String readyPrompt = "Give me info about " + productName;
-            etMessage.setText("");
-            appendMessage("You", readyPrompt, true);
-            sendMessageToAI(readyPrompt);
+            productPrice = getArguments().getDouble("product_price", 0.0);
+            android.util.Log.d("AI_AUTO", "productName = " + productName);
         }
 
         btnSend.setOnClickListener(v -> {
@@ -140,6 +135,32 @@ public class Ai_fragment extends Fragment {
         return rootView;
     }
 
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+                Log.d("AI_AUTO", "onViewCreated");
+        if (savedInstanceState != null) return;
+
+        Log.d("AI_AUTO", "onViewCreated");
+        chatContainer = view.findViewById(R.id.chatContainer);
+        scrollChat = view.findViewById(R.id.scrollChat);
+
+            if (!isAdded()) return;
+            if (productName == null || productName.trim().isEmpty()) return;
+            if (autoMessageSent) return;
+           if(chatContainer!=null)
+               Log.d("Ai_AUTO", "chatContainer is not null");
+            autoMessageSent = true;
+
+            String readyPrompt = "Give me useful information about this product: " + productName;
+
+            appendMessage("You", readyPrompt, true);
+            sendMessageToAI(readyPrompt);
+
+
+    }
+
+
     private void sendMessageToAI(String userMessage) {
         if (!isAdded()) return;
 
@@ -159,8 +180,11 @@ public class Ai_fragment extends Fragment {
         }
 
         TextView loadingView = createMessageView("AI is typing...", false);
-        chatContainer.addView(loadingView);
-        scrollToBottom();
+
+        if (loadingView != null && chatContainer != null) {
+            chatContainer.addView(loadingView);
+            scrollToBottom();
+        }
 
         try {
             JSONObject bodyJson = new JSONObject();
@@ -271,19 +295,23 @@ public class Ai_fragment extends Fragment {
             btnSend.setEnabled(true);
         }
     }
-
-    private void appendMessage(String sender, String message, boolean isUser) {
-        if (!isAdded()) return;
+    private void appendMessage(String sender, String message, boolean isUser) {if (!isAdded()) return;
 
         TextView tv = createMessageView(sender + ": " + message, isUser);
-        chatContainer.addView(tv);
-        scrollToBottom();
+
+        // FIX: Only add to container if the view was successfully created
+        if (tv != null && chatContainer != null) {
+            chatContainer.addView(tv);
+            scrollToBottom();
+        }
     }
 
+    @Nullable
     private TextView createMessageView(String text, boolean isUser) {
         Context context = getContext();
-        if (context == null) {
-            context = requireActivity();
+
+        if (context == null || chatContainer == null) {
+            return null;
         }
 
         TextView tv = new TextView(context);
@@ -295,6 +323,7 @@ public class Ai_fragment extends Fragment {
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
         );
+
         params.setMargins(20, 12, 20, 12);
 
         if (isUser) {
@@ -313,7 +342,10 @@ public class Ai_fragment extends Fragment {
 
     private void scrollToBottom() {
         if (scrollChat != null) {
-            scrollChat.post(() -> scrollChat.fullScroll(View.FOCUS_DOWN));
+            scrollChat.post(() -> {if(getContext()!=null&&scrollChat != null)
+                        scrollChat.fullScroll(View.FOCUS_DOWN);
+                    });
+
         }
     }
 

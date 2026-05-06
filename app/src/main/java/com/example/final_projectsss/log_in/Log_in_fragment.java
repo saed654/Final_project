@@ -19,7 +19,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 public class Log_in_fragment extends Fragment {
 
     private static final String TAG = "LOGIN_FRAGMENT";
-
+    TextView title;
     EditText email, password;
     Button login, signup;
 
@@ -33,7 +33,8 @@ public class Log_in_fragment extends Fragment {
                              Bundle savedInstanceState) {
 
         rootView = inflater.inflate(R.layout.fragment_log_in_fragment, container, false);
-
+         Log.d(TAG, "onCreateViewlogin");
+        title = rootView.findViewById(R.id.title);
         email = rootView.findViewById(R.id.mail);
         password = rootView.findViewById(R.id.pass);
         login = rootView.findViewById(R.id.b1);
@@ -45,8 +46,14 @@ public class Log_in_fragment extends Fragment {
 
         /* ========= SIGN UP (USER ONLY) ========= */
         signup.setOnClickListener(v -> {
+
             login.setEnabled(false);
             signup.setEnabled(false);
+
+            title.setText("Facecare Sign Up");
+            title.setTextColor(getResources().getColor(com.google.android.material.R.color.design_default_color_secondary));
+            email.setHint("new email");
+            password.setHint("new password");
             String e = email.getText().toString().trim();
             String p = password.getText().toString().trim();
 
@@ -82,8 +89,6 @@ public class Log_in_fragment extends Fragment {
                         Log.e(TAG, "Sign up failed", err);
                         showSnack(err.getMessage());
                     });
-            login.setEnabled(true);
-            signup.setEnabled(true);
         });
 
         /* ========= LOGIN ========= */
@@ -93,6 +98,13 @@ public class Log_in_fragment extends Fragment {
         return rootView;
     }
     private void loging()  {
+
+              title.setText("Facecare Login");
+              title.setTextColor(getResources().getColor(com.google.android.material.R.color.design_default_color_primary));
+              email.setHint("Email");
+              password.setHint("Password");
+
+
         login.setEnabled(false);
         signup.setEnabled(false);
         String e = email.getText().toString().trim();
@@ -107,8 +119,6 @@ public class Log_in_fragment extends Fragment {
 
         auth.signInWithEmailAndPassword(e, p)
                 .addOnSuccessListener(result -> {
-                    login.setEnabled(true);
-                    signup.setEnabled(true);
                     String uid = result.getUser().getUid();
 
                     db.collection("users")
@@ -117,6 +127,8 @@ public class Log_in_fragment extends Fragment {
                             .addOnSuccessListener(doc -> {
 
                                 if (!doc.exists()) {
+                                    login.setEnabled(true);
+                                    signup.setEnabled(true);
                                     auth.signOut();
                                     showSnack("Account data not found");
                                     Log.w(TAG, "No Firestore doc for UID: " + uid);
@@ -125,6 +137,8 @@ public class Log_in_fragment extends Fragment {
 
                                 Boolean active = doc.getBoolean("active");
                                 if (active == null || !active) {
+                                    login.setEnabled(true);
+                                    signup.setEnabled(true);
                                     auth.signOut();
                                     showSnack("Account disabled. Contact manager.");
                                     Log.w(TAG, "Disabled account: " + e);
@@ -133,17 +147,18 @@ public class Log_in_fragment extends Fragment {
 
                                 String role = doc.getString("role");
                                 Log.d(TAG, "Login success, role=" + role);
-
+                                login.setEnabled(true);
+                                signup.setEnabled(true);
                                 if ("manager".equals(role)) {
                                     ((MainActivity) getActivity())
                                             .setmenu(role);
                                     ((MainActivity) getActivity())
-                                            .changefrag(new Manager_fragment());
+                                            .changefrag(new Manager_fragment(), R.id.managerdash);
                                 } else {
                                     ((MainActivity) getActivity())
                                             .setmenu(role);
                                     ((MainActivity) getActivity())
-                                            .changefrag( new UserProductsFragment());
+                                            .changefrag( new UserProductsFragment(), R.id.productsmenu);
                                 }
                             })
                             .addOnFailureListener(err -> {
@@ -162,8 +177,6 @@ public class Log_in_fragment extends Fragment {
                     Log.e(TAG, "Login failed", err);
                     showSnack(err.getMessage());
                 });
-        login.setEnabled(true);
-        signup.setEnabled(true);
     }
     private void showSnack(String msg) {
         // Check if view is available before showing snackbar

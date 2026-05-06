@@ -64,6 +64,7 @@ public class Manager_fragment extends Fragment {
 
         if (e.isEmpty()) {
             showSnack("Enter email");
+            setRole.setEnabled(true);
             return;
         }
 
@@ -75,12 +76,14 @@ public class Manager_fragment extends Fragment {
                     if (q.isEmpty()) {
                         showSnack("User not found");
                         Log.w(TAG, "User not found: " + e);
+                        setRole.setEnabled(true);
                         return;
                     }
 
                     if (q.size() > 1) {
                         showSnack("More than one user has this email");
                         Log.w(TAG, "Duplicate email in Firestore: " + e);
+                        setRole.setEnabled(true);
                         return;
                     }
 
@@ -90,12 +93,14 @@ public class Manager_fragment extends Fragment {
 
                         if (role.equals(currentRole)) {
                             showSnack("User already has this role");
+                            setRole.setEnabled(true);
                             Log.d(TAG, "Role unchanged for " + e + ": " + role);
                             return;
                         }
 
                         if ("manager".equals(currentRole) && "user".equals(role)) {
                             showSnack("Cannot downgrade manager");
+                            setRole.setEnabled(true);
                             Log.w(TAG, "Attempt to downgrade manager: " + e);
                             return;
                         }
@@ -128,6 +133,8 @@ public class Manager_fragment extends Fragment {
         String e = email.getText().toString().trim();
 
         if (e.isEmpty()) {
+            disableBtn.setEnabled(true);
+            enableBtn.setEnabled(true);
             showSnack("Enter email");
             return;
         }
@@ -140,6 +147,8 @@ public class Manager_fragment extends Fragment {
                     if (q.isEmpty()) {
                         showSnack("User not found");
                         Log.w(TAG, "User not found: " + e);
+                        disableBtn.setEnabled(true);
+                        enableBtn.setEnabled(true);
                         return;
                     }
 
@@ -148,6 +157,8 @@ public class Manager_fragment extends Fragment {
                         if ("manager".equals(doc.getString("role"))) {
                             showSnack("Cannot change manager status");
                             Log.w(TAG, "Attempt to modify manager");
+                            disableBtn.setEnabled(true);
+                            enableBtn.setEnabled(true);
                         } else {
                             doc.getReference().update("active", active).addOnSuccessListener(unused -> {
                                 showSnack(active ? "User enabled" : "User disabled");

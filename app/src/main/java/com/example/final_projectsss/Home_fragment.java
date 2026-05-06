@@ -7,6 +7,7 @@ import android.view.ViewGroup;
 import android.content.Intent;
 import android.net.Uri;
 import android.widget.Button;
+import android.widget.LinearLayout;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -20,6 +21,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 
 public class Home_fragment extends Fragment {
      private FirebaseFirestore db = FirebaseFirestore.getInstance();
+     LinearLayout log_inContainer;
 
     private Button btnContactUs;
     private Button btnLoginNow;
@@ -36,7 +38,15 @@ public class Home_fragment extends Fragment {
 
         btnContactUs = view.findViewById(R.id.btnContactUs);
         btnLoginNow = view.findViewById(R.id.btnLoginNow);
+        log_inContainer=view.findViewById(R.id.log_inh);
 
+        NotificationHelper.createNotificationChannel(requireContext());
+        OrderAlertHelper.checkAndShowReadyNotifications(requireContext());
+        if (FirebaseAuth.getInstance().getCurrentUser() != null) {
+            log_inContainer.setVisibility(View.GONE);
+        } else {
+            log_inContainer.setVisibility(View.VISIBLE);
+        }
 
         // Open dialer with store phone number
         btnContactUs.setOnClickListener(v -> {
@@ -48,7 +58,7 @@ public class Home_fragment extends Fragment {
         // Go to login page
         btnLoginNow.setOnClickListener(v -> {
             if (getActivity() instanceof MainActivity) {
-                ((MainActivity) getActivity()).changefrag(new Log_in_fragment());
+                ((MainActivity) getActivity()).changefrag(new Log_in_fragment(), R.id.log_inmenu);
             }
         });
 

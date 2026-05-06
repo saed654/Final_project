@@ -24,7 +24,7 @@ public class ReminderScheduler {
      * isReschedule = true when called from BootReceiver
      * isReschedule = false when called after a new booking
      */
-    public static void scheduleReminder(Context context, String documentId, boolean isReschedule,String email) {
+    public static void scheduleReminder(Context context, String documentId, boolean isReschedule) {
         if (context == null) {
             Log.e(TAG, "Context is null");
             return;
@@ -38,7 +38,7 @@ public class ReminderScheduler {
         try {
             Log.d(TAG, "Trying to schedule for: " + documentId + " | reschedule=" + isReschedule);
 
-            Set<String> saved = ReminderStorage.getCurrentUserReminderDates(context);
+            Set<String> saved = ReminderStorage.getAllReminders(context);
 
             if (!isReschedule && saved.contains(documentId)) {
                 Log.d(TAG, "Reminder already exists for date: " + documentId);
@@ -69,7 +69,7 @@ public class ReminderScheduler {
             intent.putExtra("title", "Appointment Reminder");
             intent.putExtra("message", "You have an appointment on " + documentId);
             intent.putExtra("notification_id", documentId.hashCode());
-            intent.putExtra("email", email);
+
 
             PendingIntent pendingIntent = PendingIntent.getBroadcast(
                     context,

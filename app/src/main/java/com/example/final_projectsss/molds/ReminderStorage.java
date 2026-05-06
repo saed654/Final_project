@@ -22,15 +22,10 @@ public class ReminderStorage {
     public static void saveReminder(Context context, String date) {
         if (context == null || date == null || date.trim().isEmpty()) return;
 
-        String email = getCurrentUserEmail();
-        if (email == null || email.isEmpty()) return;
-
         try {
             SharedPreferences prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
             Set<String> current = new HashSet<>(prefs.getStringSet(KEY_DATES, new HashSet<>()));
-
-            current.add(buildReminderKey(email, date));
-
+            current.add(date);
             prefs.edit().putStringSet(KEY_DATES, current).apply();
         } catch (Exception e) {
             Log.e(TAG, "Failed to save reminder: " + date, e);
@@ -58,15 +53,10 @@ public class ReminderStorage {
     public static void removeReminder(Context context, String date) {
         if (context == null || date == null || date.trim().isEmpty()) return;
 
-        String email = getCurrentUserEmail();
-        if (email == null || email.isEmpty()) return;
-
         try {
             SharedPreferences prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
             Set<String> current = new HashSet<>(prefs.getStringSet(KEY_DATES, new HashSet<>()));
-
-            current.remove(buildReminderKey(email, date));
-
+            current.remove(date);
             prefs.edit().putStringSet(KEY_DATES, current).apply();
 
             ReminderScheduler.cancelReminder(context, date);
@@ -82,28 +72,17 @@ public class ReminderStorage {
     public static void clearAllReminders(Context context) {
         if (context == null) return;
 
-        String email = getCurrentUserEmail();
-        if (email == null || email.isEmpty()) return;
-
         try {
-            SharedPreferences prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
-            Set<String> current = new HashSet<>(prefs.getStringSet(KEY_DATES, new HashSet<>()));
-
-            String prefix = email + "|";
-            Set<String> updated = new HashSet<>(current);
-
-            for (String item : current) {
-                if (item != null && item.startsWith(prefix)) {
-                    String date = item.substring(prefix.length());
-                    ReminderScheduler.cancelReminder(context, date);
-                    updated.remove(item);
-                }
+            Set<String> all = getAllReminders(context);
+            for (String date : all) {
+                ReminderScheduler.cancelReminder(context, date);
             }
 
-            prefs.edit().putStringSet(KEY_DATES, updated).apply();
+            SharedPreferences prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
+            prefs.edit().remove(KEY_DATES).apply();
 
         } catch (Exception e) {
-            Log.e(TAG, "Failed to clear current user reminders", e);
+            Log.e(TAG, "Failed to clear all reminders", e);
         }
     }
 
@@ -136,39 +115,5 @@ public class ReminderStorage {
                 })
                 .addOnFailureListener(e ->
                         Log.e(TAG, "Failed checking bookings left for date: " + dateId, e));
-    }
-
-    public static Set<String> getCurrentUserReminderDates(Context context) {
-        Set<String> result = new HashSet<>();
-
-        if (context == null) return result;
-
-        String email = getCurrentUserEmail();
-        if (email == null || email.isEmpty()) return result;
-
-        try {
-            Set<String> all = getAllReminders(context);
-            String prefix = email + "|";
-
-            for (String item : all) {
-                if (item != null && item.startsWith(prefix)) {
-                    result.add(item.substring(prefix.length()));
-                }
-            }
-        } catch (Exception e) {
-            Log.e(TAG, "Failed to get current user reminders", e);
-        }
-
-        return result;
-    }
-    private static String buildReminderKey(String email, String date) {
-        return email + "|" + date;
-    }
-
-    private static String getCurrentUserEmail() {
-        if (FirebaseAuth.getInstance().getCurrentUser() == null) return null;
-        String email = FirebaseAuth.getInstance().getCurrentUser().getEmail();
-        if (email == null) return null;
-        return email.trim().toLowerCase();
     }
 }

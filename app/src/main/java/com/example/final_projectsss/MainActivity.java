@@ -18,6 +18,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 public class MainActivity extends AppCompatActivity {
+    boolean x=false;
     FirebaseFirestore db = FirebaseFirestore.getInstance();
     FirebaseAuth auth;
     BottomNavigationView bottomNavigationView;
@@ -42,7 +43,7 @@ public class MainActivity extends AppCompatActivity {
     private void loadStartPageByRole() {
         if (auth.getCurrentUser() == null) {
             setmenu("");
-            changefrag(new Home_fragment());
+            changefrag(new Home_fragment(), R.id.homemenu);
             return;
         }
 
@@ -54,7 +55,7 @@ public class MainActivity extends AppCompatActivity {
                         Toast.makeText(this, "User data not found", Toast.LENGTH_SHORT).show();
                         auth.signOut();
                         setmenu("");
-                        changefrag(new Home_fragment());
+                        changefrag(new Home_fragment(), R.id.homemenu);
                         return;
                     }
                     if(documentSnapshot.getBoolean("active") != null || documentSnapshot.getBoolean("active")) {
@@ -63,82 +64,93 @@ public class MainActivity extends AppCompatActivity {
 
                         if ("manager".equals(role)) {
                             setmenu("manager");
-                            changefrag(new Manager_fragment());
+                            changefrag(new Manager_fragment(), R.id.managerdash);
                         } else {
                             setmenu("user");
-                            changefrag(new UserProductsFragment());
+                            changefrag(new UserProductsFragment(), R.id.productsmenu);
                         }
                     }else{
                     auth.signOut();
                     setmenu("");
-                    changefrag(new Home_fragment());}
+                    changefrag(new Home_fragment(), R.id.homemenu);}
                 })
                 .addOnFailureListener(e -> {
                     Toast.makeText(this, "Failed to load user data", Toast.LENGTH_SHORT).show();
                     auth.signOut();
                     setmenu("");
-                    changefrag(new Home_fragment());
+                    changefrag(new Home_fragment(), R.id.homemenu);
                 });
     }
 
     private void setupBottomNavigation() {
         bottomNavigationView.setOnItemSelectedListener(item -> {
-            int id = item.getItemId();
+           if(!x) {
+               int id = item.getItemId();
 
-            if (id == R.id.log_inmenu) {
-                changefrag(new Log_in_fragment());
-                return true;
-            }
-            else if (id == R.id.homemenu) {
-                changefrag(new Home_fragment());
-                return true;
-            }
-            else if (id == R.id.productsmenu) {
-                changefrag(new UserProductsFragment());
-                return true;
-            }
-            else if (id == R.id.aimenu) {
-                if (auth.getCurrentUser() == null) {
-                    Toast.makeText(this, "You must log in first", Toast.LENGTH_SHORT).show();
-                    changefrag(new Log_in_fragment());
-                } else {
-                    changefrag(new Ai_fragment());
-                }
-                return true;
-            }
-            else if (id == R.id.timeschedule) {
-                if (auth.getCurrentUser() == null) {
-                    Toast.makeText(this, "You must log in first", Toast.LENGTH_SHORT).show();
-                    changefrag(new Log_in_fragment());
-                } else {
-                    changefrag(new Schedule_fragment());
-                }
-                return true;
-            }
-            else if (id == R.id.log_out_menu) {
-                auth.signOut();
-                setmenu("");
-                changefrag(new Home_fragment());
-                return true;
-            }
-            else if (id == R.id.managerdash) {
-                changefrag(new Manager_fragment());
-                return true;
-            }
-            else if (id == R.id.products_mang_menu) {
-                changefrag(new ManagerProductsFragment());
-                return true;
-            }
+               if (id == R.id.log_inmenu) {
+                   changefrag(new Log_in_fragment());
+                   return true;
+               } else if (id == R.id.homemenu) {
+                   changefrag(new Home_fragment());
+                   return true;
+               } else if (id == R.id.productsmenu) {
+                   changefrag(new UserProductsFragment());
+                   return true;
+               } else if (id == R.id.aimenu) {
+                   if (auth.getCurrentUser() == null) {
+                       Toast.makeText(this, "You must log in first", Toast.LENGTH_SHORT).show();
+                       changefrag(new Log_in_fragment());
+                   } else {
+                       changefrag(new Ai_fragment());
+                   }
+                   return true;
+               } else if (id == R.id.timeschedule) {
+                   if (auth.getCurrentUser() == null) {
+                       Toast.makeText(this, "You must log in first", Toast.LENGTH_SHORT).show();
+                       changefrag(new Log_in_fragment());
+                   } else {
+                       changefrag(new Schedule_fragment());
+                   }
+                   return true;
+               } else if (id == R.id.log_out_menu) {
+                   auth.signOut();
+                   setmenu("");
+                   changefrag(new Home_fragment());
+                   return true;
+               } else if (id == R.id.managerdash) {
+                   changefrag(new Manager_fragment());
+                   return true;
+               } else if (id == R.id.products_mang_menu) {
+                   changefrag(new ManagerProductsFragment());
+                   return true;
+               }
 
-            return false;
-        });
+               return false;
+           }
+           x=false;
+            return true;
+          });
+
     }
+
 
     public void changefrag(Fragment fragment) {
         getSupportFragmentManager()
                 .beginTransaction()
                 .replace(R.id.fragment_container, fragment)
                 .commit();
+    }
+    public void changefrag(Fragment fragment, int selectedMenuId) {
+        getSupportFragmentManager()
+                .beginTransaction()
+                .replace(R.id.fragment_container, fragment)
+                .commit();
+
+        x=true;
+
+        if (selectedMenuId != -1 && bottomNavigationView != null) {
+            bottomNavigationView.setSelectedItemId(selectedMenuId);
+        }
     }
 
     public void setmenu(String role) {

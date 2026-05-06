@@ -196,7 +196,7 @@ public class UserProductsFragment extends Fragment implements ProductAdapter.Lis
         bundle.putDouble("product_price", p.price);
         aiFragment.setArguments(bundle);
 
-        ((MainActivity) getActivity()).changefrag(aiFragment);
+        ((MainActivity) getActivity()).changefrag(aiFragment, R.id.aimenu);
     }
 
     private void openCartSafely() {

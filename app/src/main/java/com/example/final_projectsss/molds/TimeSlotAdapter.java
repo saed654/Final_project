@@ -101,6 +101,11 @@ public class TimeSlotAdapter extends RecyclerView.Adapter<TimeSlotAdapter.VH> {
 
         String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
+        if(s.userId==""){
+            Toast.makeText(c, "No appointment to cancel", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         if (s.userId == null || !s.userId.equals(uid)) {
             Toast.makeText(c, "You can only cancel your own appointment", Toast.LENGTH_SHORT).show();
             return;
@@ -161,48 +166,11 @@ public class TimeSlotAdapter extends RecyclerView.Adapter<TimeSlotAdapter.VH> {
                 .setItems(options, (d, which) -> {
 
                     if (which == 0) {
-                        // Cancel booking
-
-                        String oldUserId = s.userId;
-                        String oldUserEmail = s.userEmail;
-                        String oldTime = s.time;
-
-                        db.collection("dor")
-                                .document(dateId)
-                                .collection("slots")
-                                .document(s.id)
-                                .update("isBooked", false,
-                                        "userId", "",
-                                        "userEmail", "")
-                                .addOnSuccessListener(unused -> {
-
-                                    // send alert to user if this slot belonged to someone
-                                    if (oldUserId != null && !oldUserId.isEmpty()) {
-                                        Map<String, Object> alert = new HashMap<>();
-                                        alert.put("type", "appointment_cancelled");
-                                        alert.put("message", "Your appointment on " + dateId + " at " + oldTime + " was cancelled.");
-                                        alert.put("createdAt", FieldValue.serverTimestamp());
-
-                                        db.collection("users")
-                                                .document(oldUserId)
-                                                .collection("alerts")
-                                                .add(alert);
-                                    }
-
-                                    s.isBooked = false;
-                                    s.userId = "";
-                                    s.userEmail = "";
-                                    notifyDataSetChanged();
-
-                                    ReminderStorage.removeReminderIfNoBookingsLeft(c, dateId, db);
-
-                                    Toast.makeText(c, "Booking cancelled", Toast.LENGTH_SHORT).show();
-                                })
-                                .addOnFailureListener(e ->
-                                        Toast.makeText(c, "Failed to cancel booking", Toast.LENGTH_SHORT).show());
+                        ownercanceling(s, c,false);
                     }
 
                     if (which == 1) {
+                        ownercanceling(s,c,true);
                         // Delete slot
                         db.collection("dor")
                                 .document(dateId)
@@ -216,8 +184,6 @@ public class TimeSlotAdapter extends RecyclerView.Adapter<TimeSlotAdapter.VH> {
                                         notifyItemRemoved(position);
                                     }
 
-                                    ReminderStorage.removeReminderIfNoBookingsLeft(c, dateId, db);
-
                                     Toast.makeText(c, "Slot deleted", Toast.LENGTH_SHORT).show();
                                 })
                                 .addOnFailureListener(e ->
@@ -228,13 +194,67 @@ public class TimeSlotAdapter extends RecyclerView.Adapter<TimeSlotAdapter.VH> {
                 .show();
     }
 
+    public void ownercanceling(SlotModel s, Context c,boolean delete){
+        {
+            // Cancel booking
+
+            String oldUserId = s.userId;
+            String oldUserEmail = s.userEmail;
+            String oldTime = s.time;
+
+            if(oldUserId==null|| oldUserId.isEmpty()){
+                if(!delete)
+                Toast.makeText(c, "No booking to cancel", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            db.collection("dor")
+                    .document(dateId)
+                    .collection("slots")
+                    .document(s.id)
+                    .update("isBooked", false,
+                            "userId", "",
+                            "userEmail", "")
+                    .addOnSuccessListener(unused -> {
+
+                        // send alert to user if this slot belonged to someone
+                        if (oldUserId != null && !oldUserId.isEmpty()) {
+                            Map<String, Object> alert = new HashMap<>();
+                            alert.put("type", "appointment_cancelled");
+                            alert.put("message", "Your appointment on " + dateId + " at " + oldTime + " was cancelled.");
+                            alert.put("createdAt", FieldValue.serverTimestamp());
+
+                            db.collection("users")
+                                    .document(oldUserId)
+                                    .collection("alerts")
+                                    .add(alert);
+                            Toast.makeText(c, "Booking cancelled", Toast.LENGTH_SHORT).show();
+                        }
+
+                        s.isBooked = false;
+                        s.userId = "";
+                        s.userEmail = "";
+                        notifyDataSetChanged();
+
+                        ReminderStorage.removeReminderIfNoBookingsLeft(c, dateId, db);
+
+
+                    })
+                    .addOnFailureListener(e ->
+                            Toast.makeText(c, "Failed to cancel booking", Toast.LENGTH_SHORT).show());
+        }
+    }
+
     /**
      * Book slot safely with transaction.
      * Also schedules only one reminder per date.
      */
     private void bookSlot(SlotModel s, Context c) {
           isProcessing=true;
-        if (FirebaseAuth.getInstance().getCurrentUser() == null) return;
+        if (FirebaseAuth.getInstance().getCurrentUser() == null) {
+            isProcessing=false;
+            return;
+        }
 
         String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
         String email = FirebaseAuth.getInstance().getCurrentUser().getEmail();
@@ -262,6 +282,7 @@ public class TimeSlotAdapter extends RecyclerView.Adapter<TimeSlotAdapter.VH> {
 
                     // ❌ RULE 1: MAX 2 BOOKINGS
                     if (userCount >= 2) {
+                        isProcessing=false;
                         Toast.makeText(c,
                                 "You can only book 2 consecutive slots",
                                 Toast.LENGTH_SHORT).show();
@@ -271,6 +292,7 @@ public class TimeSlotAdapter extends RecyclerView.Adapter<TimeSlotAdapter.VH> {
                     // ❌ RULE 2: MUST BE CONSECUTIVE
                     if (userCount == 1) {
                         if (Math.abs(currentIndex - existingIndex) != 1) {
+                            isProcessing=false;
                             Toast.makeText(c,
                                     "Slots must be consecutive (e.g. 09:00 + 09:30)",
                                     Toast.LENGTH_SHORT).show();
@@ -300,7 +322,7 @@ public class TimeSlotAdapter extends RecyclerView.Adapter<TimeSlotAdapter.VH> {
                                 "isBooked", true,
                                 "userId", uid,
                                 "userEmail", email == null ? "" : email);
-
+                        isProcessing=false;
                         return null;
 
                     }).addOnSuccessListener(v -> {
@@ -313,7 +335,7 @@ public class TimeSlotAdapter extends RecyclerView.Adapter<TimeSlotAdapter.VH> {
 
                         // 🔔 Reminder logic (only once per day)
                         if (ReminderScheduler.isReminderValid(dateId)) {
-                            ReminderScheduler.scheduleReminder(c, dateId, false,s.userEmail);
+                            ReminderScheduler.scheduleReminder(c, dateId, false);
                         }
                         isProcessing=false;
                         Toast.makeText(c, "Booked!", Toast.LENGTH_SHORT).show();
