@@ -322,7 +322,6 @@ public class TimeSlotAdapter extends RecyclerView.Adapter<TimeSlotAdapter.VH> {
                                 "isBooked", true,
                                 "userId", uid,
                                 "userEmail", email == null ? "" : email);
-                        isProcessing=false;
                         return null;
 
                     }).addOnSuccessListener(v -> {

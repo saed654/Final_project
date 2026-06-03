@@ -51,7 +51,7 @@ public class Ai_fragment extends Fragment {
     // IMPORTANT:
     // For real apps, DO NOT keep your secret key inside the APK.
     // Move it to a backend/server if possible.
-    private static final String API_KEY = "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";
+    private static final String API_KEY = "API_KEY";
     private static final String API_URL = "https://openrouter.ai/api/v1/chat/completions";
     private static final String MODEL = "openrouter/free";
 
